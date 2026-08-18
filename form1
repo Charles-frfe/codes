@@ -1,60 +1,39 @@
-Private Sub ManterSomenteAbasTemporarias(wb As Object, nomesTemporarios As List(Of String))
-    For i As Integer = wb.Worksheets.Count To 1 Step -1
-        Dim ws As Object = wb.Worksheets(i)
-        Dim nome As String = ws.Name.ToString()
+Private Function FormatarNomeModeloFicha(nomeModelo As String, codigo As String) As String
+    If String.IsNullOrWhiteSpace(nomeModelo) Then Return ""
 
-        Dim manter As Boolean = nomesTemporarios.Exists(
-            Function(item As String)
-                Return String.Equals(item, nome, StringComparison.OrdinalIgnoreCase)
-            End Function
-        )
+    Dim texto As String = nomeModelo.Trim()
 
-        If Not manter Then
-            ws.Delete()
-        End If
-    Next
-End Sub
+    If Not String.IsNullOrWhiteSpace(codigo) AndAlso
+       texto.StartsWith(codigo.Trim(), StringComparison.OrdinalIgnoreCase) Then
 
-Private Sub RenomearAbasGeradas(wb As Object,
-                                nomesTemporarios As List(Of String),
-                                nomesDesejados As List(Of String))
+        texto = texto.Substring(codigo.Trim().Length)
 
-    For i As Integer = 0 To nomesTemporarios.Count - 1
-        Dim ws As Object = ObterPlanilha(wb, nomesTemporarios(i))
+        While texto.StartsWith("_") OrElse texto.StartsWith("-") OrElse texto.StartsWith(" ")
+            texto = texto.Substring(1)
+        End While
+    Else
+        Dim posUnderline As Integer = texto.IndexOf("_"c)
 
-        If ws IsNot Nothing Then
-            ws.Name = ObterNomeAbaDisponivel(wb, nomesDesejados(i))
-        End If
-    Next
-End Sub
+        If posUnderline > 0 Then
+            Dim primeiraParte As String = texto.Substring(0, posUnderline)
 
-Private Function ObterNomeAbaDisponivel(wb As Object, nomeBase As String) As String
-    Dim baseLimpa As String = LimitarNomeAba(nomeBase)
-
-    If baseLimpa = "" Then baseLimpa = "Ficha"
-
-    For tentativa As Integer = 0 To 50
-        Dim candidato As String
-
-        If tentativa = 0 Then
-            candidato = baseLimpa
-        Else
-            Dim sufixo As String = " " & (tentativa + 1).ToString()
-            Dim limite As Integer = 31 - sufixo.Length
-
-            candidato = baseLimpa
-
-            If candidato.Length > limite Then
-                candidato = candidato.Substring(0, limite)
+            If SomenteDigitos(primeiraParte) Then
+                texto = texto.Substring(posUnderline + 1)
             End If
-
-            candidato &= sufixo
         End If
+    End If
 
-        If ObterPlanilha(wb, candidato) Is Nothing Then
-            Return candidato
+    Return FormatarTextoFicha(texto)
+End Function
+
+Private Function SomenteDigitos(texto As String) As Boolean
+    If String.IsNullOrWhiteSpace(texto) Then Return False
+
+    For Each ch As Char In texto
+        If Not Char.IsDigit(ch) Then
+            Return False
         End If
     Next
 
-    Return LimitarNomeAba(baseLimpa & " " & DateTime.Now.ToString("ss"))
+    Return True
 End Function
