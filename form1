@@ -1,39 +1,73 @@
-Private Function FormatarNomeModeloFicha(nomeModelo As String, codigo As String) As String
-    If String.IsNullOrWhiteSpace(nomeModelo) Then Return ""
+Private Sub EscreverValorDepoisDoTitulo(ws As Object,
+                                        textoProcurado As String,
+                                        celulaFallback As String,
+                                        tituloPadrao As String,
+                                        valor As String,
+                                        Optional valorVermelho As Boolean = False,
+                                        Optional valorNegrito As Boolean = False)
 
-    Dim texto As String = nomeModelo.Trim()
+    If String.IsNullOrWhiteSpace(valor) Then Return
 
-    If Not String.IsNullOrWhiteSpace(codigo) AndAlso
-       texto.StartsWith(codigo.Trim(), StringComparison.OrdinalIgnoreCase) Then
+    Dim celula As Object = ProcurarCelula(ws, textoProcurado)
 
-        texto = texto.Substring(codigo.Trim().Length)
-
-        While texto.StartsWith("_") OrElse texto.StartsWith("-") OrElse texto.StartsWith(" ")
-            texto = texto.Substring(1)
-        End While
-    Else
-        Dim posUnderline As Integer = texto.IndexOf("_"c)
-
-        If posUnderline > 0 Then
-            Dim primeiraParte As String = texto.Substring(0, posUnderline)
-
-            If SomenteDigitos(primeiraParte) Then
-                texto = texto.Substring(posUnderline + 1)
-            End If
-        End If
+    If celula Is Nothing Then
+        Try
+            celula = ws.Range(celulaFallback)
+        Catch
+            Return
+        End Try
     End If
 
-    Return FormatarTextoFicha(texto)
-End Function
+    Try
+        Dim destino As Object = celula
 
-Private Function SomenteDigitos(texto As String) As Boolean
-    If String.IsNullOrWhiteSpace(texto) Then Return False
-
-    For Each ch As Char In texto
-        If Not Char.IsDigit(ch) Then
-            Return False
+        If destino.MergeCells Then
+            destino = destino.MergeArea.Cells(1, 1)
         End If
-    Next
 
-    Return True
-End Function
+        Dim tituloFinal As String = tituloPadrao.Trim()
+
+        Try
+            Dim textoAtual As String = ""
+
+            If destino.Value IsNot Nothing Then
+                textoAtual = destino.Value.ToString().Trim()
+            End If
+
+            If textoAtual <> "" Then
+                Dim posDoisPontos As Integer = textoAtual.IndexOf(":"c)
+
+                If posDoisPontos >= 0 Then
+                    tituloFinal = textoAtual.Substring(0, posDoisPontos + 1).Trim()
+                Else
+                    tituloFinal = textoAtual.Trim() & ":"
+                End If
+            End If
+        Catch
+        End Try
+
+        If Not tituloFinal.EndsWith(":") Then
+            tituloFinal &= ":"
+        End If
+
+        Dim valorFinal As String = valor.Trim().ToUpperInvariant()
+        Dim textoFinal As String = tituloFinal & " " & valorFinal
+
+        destino.Value = textoFinal
+
+        Dim inicioValor As Integer = tituloFinal.Length + 2
+        Dim tamanhoValor As Integer = valorFinal.Length
+
+        If tamanhoValor > 0 Then
+            If valorVermelho Then
+                destino.Characters(inicioValor, tamanhoValor).Font.Color = 255
+            End If
+
+            If valorNegrito Then
+                destino.Characters(inicioValor, tamanhoValor).Font.Bold = True
+            End If
+        End If
+
+    Catch
+    End Try
+End Sub
