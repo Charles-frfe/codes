@@ -1,115 +1,33 @@
-Private Sub GerarFichaTecnica(sender As Object, e As EventArgs)
-    Try
-        If matrizes Is Nothing OrElse matrizes.Count = 0 Then
-            MessageBox.Show(
-                "Adicione pelo menos uma matriz antes de gerar a ficha técnica.",
-                "Ficha Técnica",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning
-            )
-            Return
-        End If
+EscreverValorDepoisDoTitulo(
+    ws,
+    "TEXT",
+    "E10",
+    "Text:",
+    TexturasEmLinha(matriz.TextoTexturas),
+    False,
+    True
+)
 
-        If String.IsNullOrWhiteSpace(txtPastaModelo.Text) OrElse Not Directory.Exists(txtPastaModelo.Text) Then
-            MessageBox.Show(
-                "Selecione a pasta do modelo antes de gerar a ficha técnica.",
-                "Ficha Técnica",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning
-            )
-            Return
-        End If
+If Not String.IsNullOrWhiteSpace(matriz.ObservacoesAcabamento) Then
+    EscreverValorDepoisDoTitulo(
+        ws,
+        "OBSERVAÇÕES",
+        "J17",
+        "OBSERVAÇÕES:",
+        FormatarTextoFicha(matriz.ObservacoesAcabamento),
+        True,
+        False
+    )
+End If
 
-        Dim caminhoModeloFicha As String = SelecionarModeloFichaTecnica()
-
-        If caminhoModeloFicha = "" Then
-            Return
-        End If
-
-        Dim fichasGeradas As New List(Of String)()
-        Dim ehEscala As Boolean = String.Equals(cboTipoServico.Text.Trim(), "escala", StringComparison.OrdinalIgnoreCase)
-
-        If ehEscala Then
-            Dim numeros As List(Of String) = ObterNumerosEscalaDasMatrizes()
-
-            If numeros.Count = 0 Then
-                Throw New Exception("Nenhum número de escala foi encontrado nas matrizes.")
-            End If
-
-            For Each numero As String In numeros
-                Dim matrizesDoNumero As List(Of MatrizAuxiliar) = ObterMatrizesDoNumeroEscala(numero)
-
-                If matrizesDoNumero.Count = 0 Then Continue For
-
-                Dim caminhoGerado As String = FichaTecnicaAuxiliar.GerarFichaAgrupada(
-                    caminhoModeloFicha,
-                    txtPastaModelo.Text,
-                    txtCodigo.Text.Trim(),
-                    txtNomeModelo.Text.Trim(),
-                    cboTipoServico.Text.Trim(),
-                    txtComponente.Text.Trim(),
-                    matrizesDoNumero,
-                    numero
-                )
-
-                If caminhoGerado <> "" Then
-                    fichasGeradas.Add(caminhoGerado)
-                End If
-            Next
-        Else
-            Dim caminhoGerado As String = FichaTecnicaAuxiliar.GerarFichaAgrupada(
-                caminhoModeloFicha,
-                txtPastaModelo.Text,
-                txtCodigo.Text.Trim(),
-                txtNomeModelo.Text.Trim(),
-                cboTipoServico.Text.Trim(),
-                txtComponente.Text.Trim(),
-                matrizes,
-                ""
-            )
-
-            If caminhoGerado <> "" Then
-                fichasGeradas.Add(caminhoGerado)
-            End If
-        End If
-
-        If fichasGeradas.Count = 0 Then
-            MessageBox.Show(
-                "Nenhuma ficha técnica foi gerada.",
-                "Ficha Técnica",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            )
-            Return
-        End If
-
-        Dim mensagens As New List(Of String)()
-        mensagens.Add("FICHAS TÉCNICAS GERADAS")
-        mensagens.Add("")
-        mensagens.Add("Quantidade: " & fichasGeradas.Count.ToString())
-        mensagens.Add("")
-
-        For Each ficha As String In fichasGeradas
-            mensagens.Add(ficha)
-        Next
-
-        MostrarMensagens(mensagens)
-
-        MessageBox.Show(
-            "Ficha técnica gerada com sucesso.",
-            "Ficha Técnica",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information
-        )
-
-        Process.Start("explorer.exe", "/select,""" & fichasGeradas(0) & """")
-
-    Catch ex As Exception
-        MessageBox.Show(
-            ex.Message,
-            "Ficha Técnica",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error
-        )
-    End Try
-End Sub
+If Not String.IsNullOrWhiteSpace(matriz.Acabamento) Then
+    EscreverValorDepoisDoTitulo(
+        ws,
+        "ACABAMENTO",
+        "J24",
+        "ACABAMENTO:",
+        FormatarTextoFicha(matriz.Acabamento),
+        False,
+        False
+    )
+End If
