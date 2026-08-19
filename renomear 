@@ -1,16 +1,48 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 
-echo ==============================================
-echo RESTAURANDO AS EXTENSOES DOS ARQUIVOS
-echo ==============================================
+title Remover TXT dos arquivos
+
+echo ============================================
+echo  RESTAURANDO EXTENSOES DOS ARQUIVOS
+echo ============================================
+echo.
+echo Pasta analisada:
+echo %~dp0
 echo.
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"$root = $env:CD; Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.txt' | Where-Object { $_.BaseName -match '\.' } | ForEach-Object { $novo = Join-Path $_.DirectoryName $_.BaseName; if (-not (Test-Path -LiteralPath $novo)) { Write-Host ('Restaurando: ' + $_.FullName); Rename-Item -LiteralPath $_.FullName -NewName $_.BaseName } else { Write-Host ('IGNORADO - arquivo ja existe: ' + $novo) } }"
+set /a TOTAL=0
+set /a ALTERADOS=0
+
+for /r "%~dp0" %%F in (*.txt) do (
+    set /a TOTAL+=1
+
+    for %%G in ("%%~nF") do (
+        if not "%%~xG"=="" (
+            echo Encontrado:
+            echo %%~fF
+            echo.
+            
+            ren "%%~fF" "%%~nF"
+
+            if errorlevel 1 (
+                echo [ERRO] Nao foi possivel renomear.
+            ) else (
+                echo [OK] Restaurado para: %%~nF
+                set /a ALTERADOS+=1
+            )
+
+            echo --------------------------------------------
+        )
+    )
+)
 
 echo.
-echo ==============================================
-echo PROCESSO CONCLUIDO
-echo ==============================================
-pause
+echo ============================================
+echo PROCESSO FINALIZADO
+echo ============================================
+echo Arquivos .txt encontrados: %TOTAL%
+echo Arquivos restaurados: %ALTERADOS%
+echo.
+echo Pressione qualquer tecla para fechar.
+pause >nul
