@@ -1,37 +1,16 @@
 @echo off
-setlocal EnableExtensions
+setlocal
 
-set "renomeados=0"
-set "ignorados=0"
-
-echo Removendo o .txt adicionado aos arquivos...
+echo ==============================================
+echo RESTAURANDO AS EXTENSOES DOS ARQUIVOS
+echo ==============================================
 echo.
 
-for /r %%F in (*.txt) do (
-    for %%G in ("%%~nF") do (
-        if not "%%~xG"=="" (
-            if exist "%%~dpF%%~nF" (
-                echo [IGNORADO] Ja existe um arquivo chamado:
-                echo "%%~dpF%%~nF"
-                echo.
-                set /a ignorados+=1
-            ) else (
-                echo Renomeando:
-                echo "%%~fF"
-                echo para:
-                echo "%%~dpF%%~nF"
-                echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+"$root = $env:CD; Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.txt' | Where-Object { $_.BaseName -match '\.' } | ForEach-Object { $novo = Join-Path $_.DirectoryName $_.BaseName; if (-not (Test-Path -LiteralPath $novo)) { Write-Host ('Restaurando: ' + $_.FullName); Rename-Item -LiteralPath $_.FullName -NewName $_.BaseName } else { Write-Host ('IGNORADO - arquivo ja existe: ' + $novo) } }"
 
-                ren "%%~fF" "%%~nF"
-                set /a renomeados+=1
-            )
-        )
-    )
-)
-
-echo ----------------------------------------
-echo Processo concluido.
-echo Arquivos renomeados: %renomeados%
-echo Arquivos ignorados: %ignorados%
-echo ----------------------------------------
+echo.
+echo ==============================================
+echo PROCESSO CONCLUIDO
+echo ==============================================
 pause
