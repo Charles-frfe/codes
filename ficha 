@@ -1,33 +1,103 @@
-EscreverValorDepoisDoTitulo(
-    ws,
-    "TEXT",
-    "E10",
-    "Text:",
-    TexturasEmLinha(matriz.TextoTexturas),
-    False,
-    True
-)
+Private Function ObterPastaDestinoFichaEscala(numeroEscala As String) As String
+    If String.IsNullOrWhiteSpace(numeroEscala) Then
+        Throw New Exception("Número da escala não informado para salvar a ficha técnica.")
+    End If
 
-If Not String.IsNullOrWhiteSpace(matriz.ObservacoesAcabamento) Then
-    EscreverValorDepoisDoTitulo(
-        ws,
-        "OBSERVAÇÕES",
-        "J17",
-        "OBSERVAÇÕES:",
-        FormatarTextoFicha(matriz.ObservacoesAcabamento),
-        True,
-        False
-    )
-End If
+    Dim numeroLimpo As String = numeroEscala.Trim()
 
-If Not String.IsNullOrWhiteSpace(matriz.Acabamento) Then
-    EscreverValorDepoisDoTitulo(
-        ws,
-        "ACABAMENTO",
-        "J24",
-        "ACABAMENTO:",
-        FormatarTextoFicha(matriz.Acabamento),
-        False,
-        False
+    Dim nomeModeloCN As String = ""
+
+    If Not String.IsNullOrWhiteSpace(txtPastaModelo.Text) AndAlso Directory.Exists(txtPastaModelo.Text) Then
+        nomeModeloCN = New DirectoryInfo(txtPastaModelo.Text).Name
+    End If
+
+    If String.IsNullOrWhiteSpace(nomeModeloCN) Then
+        nomeModeloCN = txtNomeModelo.Text.Trim()
+    End If
+
+    If String.IsNullOrWhiteSpace(nomeModeloCN) Then
+        Throw New Exception("Nome do modelo não encontrado para salvar a ficha técnica.")
+    End If
+
+    Dim componenteCN As String = ModuloFuncoes.LimparNomePasta(txtComponente.Text.Trim())
+
+    If String.IsNullOrWhiteSpace(componenteCN) Then
+        Throw New Exception("Componente não informado para salvar a ficha técnica.")
+    End If
+
+    ' Tentativa automática no programa_cn
+    Dim pastaBaseCN As String = Path.Combine("C:\programa_cn", "colecao")
+    Dim pastaModeloCN As String = Path.Combine(pastaBaseCN, nomeModeloCN)
+    Dim pastaComponente As String = Path.Combine(pastaModeloCN, componenteCN)
+    Dim pastaNumero As String = Path.Combine(pastaComponente, numeroLimpo)
+
+    If Directory.Exists(pastaNumero) Then
+        Return pastaNumero
+    End If
+
+    ' Tentativa alternativa usando o nome digitado
+    If Not String.IsNullOrWhiteSpace(txtNomeModelo.Text) Then
+        Dim pastaModeloAlternativa As String = Path.Combine(pastaBaseCN, txtNomeModelo.Text.Trim())
+        Dim pastaComponenteAlternativa As String = Path.Combine(pastaModeloAlternativa, componenteCN)
+        Dim pastaNumeroAlternativa As String = Path.Combine(pastaComponenteAlternativa, numeroLimpo)
+
+        If Directory.Exists(pastaNumeroAlternativa) Then
+            Return pastaNumeroAlternativa
+        End If
+    End If
+
+    ' Se já foi escolhida manualmente uma pasta nesta geração, reaproveita
+    If Not String.IsNullOrWhiteSpace(pastaNumerosFichaEscalaManual) AndAlso Directory.Exists(pastaNumerosFichaEscalaManual) Then
+        Dim pastaNumeroManual As String = Path.Combine(pastaNumerosFichaEscalaManual, numeroLimpo)
+
+        If Directory.Exists(pastaNumeroManual) Then
+            Return pastaNumeroManual
+        End If
+
+        If String.Equals(New DirectoryInfo(pastaNumerosFichaEscalaManual).Name, numeroLimpo, StringComparison.OrdinalIgnoreCase) Then
+            Return pastaNumerosFichaEscalaManual
+        End If
+    End If
+
+    ' Seleção manual
+    Using seletor As New FolderBrowserDialog()
+        seletor.Description =
+            "Não encontrei a pasta do número " & numeroLimpo & "." & Environment.NewLine &
+            "Selecione a pasta onde ficam os números da escala deste componente."
+
+        seletor.ShowNewFolderButton = False
+
+        If Directory.Exists(pastaComponente) Then
+            seletor.SelectedPath = pastaComponente
+        ElseIf Directory.Exists(pastaModeloCN) Then
+            seletor.SelectedPath = pastaModeloCN
+        Else
+            seletor.SelectedPath = "C:\programa_cn\colecao"
+        End If
+
+        If seletor.ShowDialog(Me) <> DialogResult.OK Then
+            Throw New Exception("Operação cancelada. A pasta dos números da escala não foi selecionada.")
+        End If
+
+        pastaNumerosFichaEscalaManual = seletor.SelectedPath
+    End Using
+
+    ' Caso o usuário selecione a pasta que contém os números
+    Dim pastaNumeroEscolhida As String = Path.Combine(pastaNumerosFichaEscalaManual, numeroLimpo)
+
+    If Directory.Exists(pastaNumeroEscolhida) Then
+        Return pastaNumeroEscolhida
+    End If
+
+    ' Caso o usuário selecione diretamente a pasta do número
+    If String.Equals(New DirectoryInfo(pastaNumerosFichaEscalaManual).Name, numeroLimpo, StringComparison.OrdinalIgnoreCase) Then
+        Return pastaNumerosFichaEscalaManual
+    End If
+
+    Throw New Exception(
+        "A pasta selecionada não contém o número da escala:" &
+        Environment.NewLine & numeroLimpo &
+        Environment.NewLine & Environment.NewLine &
+        "Selecione a pasta do componente, onde ficam as pastas dos números."
     )
-End If
+End Function
