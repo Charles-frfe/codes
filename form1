@@ -1,73 +1,80 @@
-Private Sub EscreverValorDepoisDoTitulo(ws As Object,
-                                        textoProcurado As String,
-                                        celulaFallback As String,
-                                        tituloPadrao As String,
-                                        valor As String,
-                                        Optional valorVermelho As Boolean = False,
-                                        Optional valorNegrito As Boolean = False)
+Private Sub btnCalcular_Click(sender As Object, e As EventArgs) Handles btnCalcular.Click
 
-    If String.IsNullOrWhiteSpace(valor) Then Return
-
-    Dim celula As Object = ProcurarCelula(ws, textoProcurado)
-
-    If celula Is Nothing Then
-        Try
-            celula = ws.Range(celulaFallback)
-        Catch
-            Return
-        End Try
+    If _texturas.Count = 0 Then
+        MessageBox.Show(
+            "Busque um modelo antes de calcular.",
+            "Estimador",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        )
+        Return
     End If
 
-    Try
-        Dim destino As Object = celula
+    lstResultado.Items.Clear()
 
-        If destino.MergeCells Then
-            destino = destino.MergeArea.Cells(1, 1)
-        End If
+    Dim totalPiloto As TimeSpan = TimeSpan.Zero
+    Dim totalEstimado As TimeSpan = TimeSpan.Zero
 
-        Dim tituloFinal As String = tituloPadrao.Trim()
+    Dim gruposMatriz = _texturas _
+        .GroupBy(Function(t) t.TipoMatriz) _
+        .OrderBy(Function(g) g.Key)
 
-        Try
-            Dim textoAtual As String = ""
+    For Each grupo In gruposMatriz
 
-            If destino.Value IsNot Nothing Then
-                textoAtual = destino.Value.ToString().Trim()
-            End If
+        lstResultado.Items.Add("===================================")
+        lstResultado.Items.Add("MATRIZ: " & grupo.Key.ToUpperInvariant())
+        lstResultado.Items.Add("-----------------------------------")
 
-            If textoAtual <> "" Then
-                Dim posDoisPontos As Integer = textoAtual.IndexOf(":"c)
+        Dim totalPilotoMatriz As TimeSpan = TimeSpan.Zero
+        Dim totalEstimadoMatriz As TimeSpan = TimeSpan.Zero
 
-                If posDoisPontos >= 0 Then
-                    tituloFinal = textoAtual.Substring(0, posDoisPontos + 1).Trim()
-                Else
-                    tituloFinal = textoAtual.Trim() & ":"
-                End If
-            End If
-        Catch
-        End Try
+        For Each textura In grupo
 
-        If Not tituloFinal.EndsWith(":") Then
-            tituloFinal &= ":"
-        End If
+            Dim resultado = _calculadora.Calcular(
+                textura,
+                CInt(nudParesPiloto.Value),
+                CInt(nudParesEscala.Value),
+                cboMaquinaEscala.Text
+            )
 
-        Dim valorFinal As String = valor.Trim().ToUpperInvariant()
-        Dim textoFinal As String = tituloFinal & " " & valorFinal
+            totalPilotoMatriz += resultado.TempoPiloto
+            totalEstimadoMatriz += resultado.TempoTotalEstimado
 
-        destino.Value = textoFinal
+            totalPiloto += resultado.TempoPiloto
+            totalEstimado += resultado.TempoTotalEstimado
 
-        Dim inicioValor As Integer = tituloFinal.Length + 2
-        Dim tamanhoValor As Integer = valorFinal.Length
+            lstResultado.Items.Add(
+                String.Format(
+                    "{0} | Piloto: {1} | Estimado: {2}",
+                    textura.NomeTextura,
+                    FormatarTempo(resultado.TempoPiloto),
+                    FormatarTempo(resultado.TempoTotalEstimado)
+                )
+            )
 
-        If tamanhoValor > 0 Then
-            If valorVermelho Then
-                destino.Characters(inicioValor, tamanhoValor).Font.Color = 255
-            End If
+        Next
 
-            If valorNegrito Then
-                destino.Characters(inicioValor, tamanhoValor).Font.Bold = True
-            End If
-        End If
+        lstResultado.Items.Add("-----------------------------------")
 
-    Catch
-    End Try
+        lstResultado.Items.Add(
+            "TOTAL " &
+            grupo.Key.ToUpperInvariant() &
+            ": " &
+            FormatarTempo(totalEstimadoMatriz)
+        )
+
+        lstResultado.Items.Add("")
+
+    Next
+
+    lblTempoPiloto.Text = FormatarTempo(totalPiloto)
+    lblTempoEstimado.Text = FormatarTempo(totalEstimado)
+
+    lblStatus.Text =
+        String.Format(
+            "{0} matriz(es) e {1} textura(s) calculadas.",
+            gruposMatriz.Count(),
+            _texturas.Count
+        )
+
 End Sub
