@@ -1,103 +1,79 @@
-Private Function ObterPastaDestinoFichaEscala(numeroEscala As String) As String
-    If String.IsNullOrWhiteSpace(numeroEscala) Then
-        Throw New Exception("Número da escala não informado para salvar a ficha técnica.")
-    End If
+Private Function IdentificarMatriz(caminho As String) As String
 
-    Dim numeroLimpo As String = numeroEscala.Trim()
+    Try
 
-    Dim nomeModeloCN As String = ""
+        Dim pastaAtual As DirectoryInfo = New FileInfo(caminho).Directory
 
-    If Not String.IsNullOrWhiteSpace(txtPastaModelo.Text) AndAlso Directory.Exists(txtPastaModelo.Text) Then
-        nomeModeloCN = New DirectoryInfo(txtPastaModelo.Text).Name
-    End If
+        While pastaAtual IsNot Nothing
 
-    If String.IsNullOrWhiteSpace(nomeModeloCN) Then
-        nomeModeloCN = txtNomeModelo.Text.Trim()
-    End If
+            If pastaAtual.Name.Equals(
+                "Lav",
+                System.StringComparison.OrdinalIgnoreCase
+            ) Then
 
-    If String.IsNullOrWhiteSpace(nomeModeloCN) Then
-        Throw New Exception("Nome do modelo não encontrado para salvar a ficha técnica.")
-    End If
+                If pastaAtual.Parent IsNot Nothing Then
+                    Return pastaAtual.Parent.Name
+                End If
 
-    Dim componenteCN As String = ModuloFuncoes.LimparNomePasta(txtComponente.Text.Trim())
+            End If
 
-    If String.IsNullOrWhiteSpace(componenteCN) Then
-        Throw New Exception("Componente não informado para salvar a ficha técnica.")
-    End If
+            pastaAtual = pastaAtual.Parent
 
-    ' Tentativa automática no programa_cn
-    Dim pastaBaseCN As String = Path.Combine("C:\programa_cn", "colecao")
-    Dim pastaModeloCN As String = Path.Combine(pastaBaseCN, nomeModeloCN)
-    Dim pastaComponente As String = Path.Combine(pastaModeloCN, componenteCN)
-    Dim pastaNumero As String = Path.Combine(pastaComponente, numeroLimpo)
+        End While
 
-    If Directory.Exists(pastaNumero) Then
-        Return pastaNumero
-    End If
+    Catch
+    End Try
 
-    ' Tentativa alternativa usando o nome digitado
-    If Not String.IsNullOrWhiteSpace(txtNomeModelo.Text) Then
-        Dim pastaModeloAlternativa As String = Path.Combine(pastaBaseCN, txtNomeModelo.Text.Trim())
-        Dim pastaComponenteAlternativa As String = Path.Combine(pastaModeloAlternativa, componenteCN)
-        Dim pastaNumeroAlternativa As String = Path.Combine(pastaComponenteAlternativa, numeroLimpo)
+    Return "Não identificado"
 
-        If Directory.Exists(pastaNumeroAlternativa) Then
-            Return pastaNumeroAlternativa
-        End If
-    End If
+End Function
 
-    ' Se já foi escolhida manualmente uma pasta nesta geração, reaproveita
-    If Not String.IsNullOrWhiteSpace(pastaNumerosFichaEscalaManual) AndAlso Directory.Exists(pastaNumerosFichaEscalaManual) Then
-        Dim pastaNumeroManual As String = Path.Combine(pastaNumerosFichaEscalaManual, numeroLimpo)
+Private Function IdentificarTextura(caminho As String) As String
 
-        If Directory.Exists(pastaNumeroManual) Then
-            Return pastaNumeroManual
+    Try
+
+        Dim arquivo As New FileInfo(caminho)
+        Dim pastaAtual As DirectoryInfo = arquivo.Directory
+
+        If pastaAtual Is Nothing Then
+            Return Path.GetFileNameWithoutExtension(caminho)
         End If
 
-        If String.Equals(New DirectoryInfo(pastaNumerosFichaEscalaManual).Name, numeroLimpo, StringComparison.OrdinalIgnoreCase) Then
-            Return pastaNumerosFichaEscalaManual
-        End If
-    End If
+        ' Exemplo:
+        ' Grava\Lav\gls_012\lav_012_OR_LaserDesign_Report.rtf
+        If pastaAtual.Parent IsNot Nothing AndAlso
+           pastaAtual.Parent.Name.Equals(
+               "Lav",
+               System.StringComparison.OrdinalIgnoreCase
+           ) Then
 
-    ' Seleção manual
-    Using seletor As New FolderBrowserDialog()
-        seletor.Description =
-            "Não encontrei a pasta do número " & numeroLimpo & "." & Environment.NewLine &
-            "Selecione a pasta onde ficam os números da escala deste componente."
+            Return pastaAtual.Name
 
-        seletor.ShowNewFolderButton = False
-
-        If Directory.Exists(pastaComponente) Then
-            seletor.SelectedPath = pastaComponente
-        ElseIf Directory.Exists(pastaModeloCN) Then
-            seletor.SelectedPath = pastaModeloCN
-        Else
-            seletor.SelectedPath = "C:\programa_cn\colecao"
         End If
 
-        If seletor.ShowDialog(Me) <> DialogResult.OK Then
-            Throw New Exception("Operação cancelada. A pasta dos números da escala não foi selecionada.")
+        ' Exemplo:
+        ' Tampa\Lav\lav_012_OR_LaserDesign_Report.rtf
+        If pastaAtual.Name.Equals(
+            "Lav",
+            System.StringComparison.OrdinalIgnoreCase
+        ) Then
+
+            Dim nomeArquivo As String =
+                Path.GetFileNameWithoutExtension(caminho)
+
+            nomeArquivo =
+                nomeArquivo.Replace("_OR_LaserDesign_Report", "")
+
+            nomeArquivo =
+                nomeArquivo.Replace("_LaserDesign_Report", "")
+
+            Return nomeArquivo
+
         End If
 
-        pastaNumerosFichaEscalaManual = seletor.SelectedPath
-    End Using
+    Catch
+    End Try
 
-    ' Caso o usuário selecione a pasta que contém os números
-    Dim pastaNumeroEscolhida As String = Path.Combine(pastaNumerosFichaEscalaManual, numeroLimpo)
+    Return Path.GetFileNameWithoutExtension(caminho)
 
-    If Directory.Exists(pastaNumeroEscolhida) Then
-        Return pastaNumeroEscolhida
-    End If
-
-    ' Caso o usuário selecione diretamente a pasta do número
-    If String.Equals(New DirectoryInfo(pastaNumerosFichaEscalaManual).Name, numeroLimpo, StringComparison.OrdinalIgnoreCase) Then
-        Return pastaNumerosFichaEscalaManual
-    End If
-
-    Throw New Exception(
-        "A pasta selecionada não contém o número da escala:" &
-        Environment.NewLine & numeroLimpo &
-        Environment.NewLine & Environment.NewLine &
-        "Selecione a pasta do componente, onde ficam as pastas dos números."
-    )
 End Function
