@@ -1,57 +1,20 @@
-public void ConcluirPrimeiroUso(
-    string pastaRaiz,
-    string novoPin,
-    string confirmacao,
-    PreferenciaTema tema)
+var linhaAdicionar = new FlowLayoutPanel
 {
-    if (novoPin != confirmacao)
-        throw new ArgumentException(
-            "A confirmação do PIN é diferente do PIN informado.");
+    AutoSize = true,
+    Dock = DockStyle.Fill,
+    WrapContents = false
+};
 
-    var pastaCompleta = Path.GetFullPath(pastaRaiz);
+linhaAdicionar.Controls.Add(_novoComponente);
+linhaAdicionar.Controls.Add(_adicionarComponente);
 
-    var resultado = _acesso.Testar(pastaCompleta);
-
-    if (!resultado.Sucesso)
-        throw new IOException(resultado.Mensagem);
-
-    var caminhoConfiguracao =
-        _compartilhada.ObterCaminho(pastaCompleta);
-
-    if (File.Exists(caminhoConfiguracao))
+layout.Controls.Add(
+    new Label
     {
-        throw new InvalidOperationException(
-            "Esta pasta já contém uma base do Projetos CAD/LASER.");
-    }
+        Text = "Adicionar componente",
+        AutoSize = true
+    },
+    0,
+    1);
 
-    EstruturaDados.Criar(pastaCompleta);
-
-    var configuracaoLocal = new ConfiguracaoLocal
-    {
-        PastaRaizDados = pastaCompleta,
-        Tema = tema,
-        NomeExibido = Environment.UserName,
-        UsuarioAtivo = true,
-        Perfil = PerfilUsuario.Operacional
-    };
-
-    // Salvar gera o IdInstalacao permanente deste PC.
-    _local.Salvar(configuracaoLocal);
-
-    var configuracaoCompartilhada =
-        new ConfiguracaoCompartilhada
-        {
-            PinAdministrativo = _pin.Criar(novoPin)
-        };
-
-    var administracao =
-        new AdministracaoService(_pin);
-
-    administracao.DefinirAdministradorInicial(
-        configuracaoCompartilhada,
-        configuracaoLocal);
-
-    _compartilhada.Salvar(
-        pastaCompleta,
-        configuracaoCompartilhada);
-}
+layout.Controls.Add(linhaAdicionar, 1, 1);
