@@ -1,68 +1,57 @@
-public ComputadorAutorizado RegistrarOuAtualizarComputador(
-    ConfiguracaoCompartilhada configuracao,
-    ConfiguracaoLocal local)
+public void ConcluirPrimeiroUso(
+    string pastaRaiz,
+    string novoPin,
+    string confirmacao,
+    PreferenciaTema tema)
 {
-    if (local.IdInstalacao == Guid.Empty)
-        throw new InvalidOperationException(
-            "A instalação local ainda não possui identificação.");
+    if (novoPin != confirmacao)
+        throw new ArgumentException(
+            "A confirmação do PIN é diferente do PIN informado.");
 
-    if (configuracao.ComputadoresAutorizados == null)
-        configuracao.ComputadoresAutorizados =
-            new List<ComputadorAutorizado>();
+    var pastaCompleta = Path.GetFullPath(pastaRaiz);
 
-    var computador =
-        configuracao.ComputadoresAutorizados
-            .FirstOrDefault(x =>
-                x.IdInstalacao == local.IdInstalacao);
+    var resultado = _acesso.Testar(pastaCompleta);
 
-    if (computador == null)
+    if (!resultado.Sucesso)
+        throw new IOException(resultado.Mensagem);
+
+    var caminhoConfiguracao =
+        _compartilhada.ObterCaminho(pastaCompleta);
+
+    if (File.Exists(caminhoConfiguracao))
     {
-        computador = new ComputadorAutorizado
+        throw new InvalidOperationException(
+            "Esta pasta já contém uma base do Projetos CAD/LASER.");
+    }
+
+    EstruturaDados.Criar(pastaCompleta);
+
+    var configuracaoLocal = new ConfiguracaoLocal
+    {
+        PastaRaizDados = pastaCompleta,
+        Tema = tema,
+        NomeExibido = Environment.UserName,
+        UsuarioAtivo = true,
+        Perfil = PerfilUsuario.Operacional
+    };
+
+    // Salvar gera o IdInstalacao permanente deste PC.
+    _local.Salvar(configuracaoLocal);
+
+    var configuracaoCompartilhada =
+        new ConfiguracaoCompartilhada
         {
-            IdInstalacao = local.IdInstalacao,
-            NomeComputador = Environment.MachineName,
-            UsuarioWindows = Environment.UserName,
-            NomeExibido = local.NomeExibido
-                ?? Environment.UserName,
-            Perfil = local.Perfil,
-            Ativo = true
+            PinAdministrativo = _pin.Criar(novoPin)
         };
 
-        configuracao.ComputadoresAutorizados.Add(computador);
-    }
-    else
-    {
-        computador.NomeComputador = Environment.MachineName;
-        computador.UsuarioWindows = Environment.UserName;
-        computador.NomeExibido =
-            local.NomeExibido ?? Environment.UserName;
-    }
+    var administracao =
+        new AdministracaoService(_pin);
 
-    return computador;
-}
+    administracao.DefinirAdministradorInicial(
+        configuracaoCompartilhada,
+        configuracaoLocal);
 
-public bool EhAdministrador(
-    ConfiguracaoCompartilhada configuracao,
-    ConfiguracaoLocal local)
-{
-    return local.IdInstalacao != Guid.Empty
-        && configuracao.IdInstalacaoAdministradora
-            == local.IdInstalacao;
-}
-
-public void DefinirAdministradorInicial(
-    ConfiguracaoCompartilhada configuracao,
-    ConfiguracaoLocal local)
-{
-    if (configuracao.IdInstalacaoAdministradora
-        != Guid.Empty)
-    {
-        throw new InvalidOperationException(
-            "Já existe um computador administrador.");
-    }
-
-    RegistrarOuAtualizarComputador(configuracao, local);
-
-    configuracao.IdInstalacaoAdministradora =
-        local.IdInstalacao;
+    _compartilhada.Salvar(
+        pastaCompleta,
+        configuracaoCompartilhada);
 }
