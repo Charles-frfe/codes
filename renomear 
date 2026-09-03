@@ -1,48 +1,97 @@
-@echo off
-setlocal EnableExtensions
+var layout = new TableLayoutPanel
+{
+    Dock = DockStyle.Fill,
+    Padding = new Padding(30),
+    ColumnCount = 2,
+    RowCount = 8
+};
 
-title Remover TXT dos arquivos
+layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-echo ============================================
-echo  RESTAURANDO EXTENSOES DOS ARQUIVOS
-echo ============================================
-echo.
-echo Pasta analisada:
-echo %~dp0
-echo.
+layout.Controls.Add(
+    new Label { Text = "Código do modelo", AutoSize = true },
+    0,
+    0);
 
-set /a TOTAL=0
-set /a ALTERADOS=0
+layout.Controls.Add(_codigo, 1, 0);
 
-for /r "%~dp0" %%F in (*.txt) do (
-    set /a TOTAL+=1
+_codigo.Leave += async delegate
+{
+    await LocalizarPilotoAutomaticamente();
+};
 
-    for %%G in ("%%~nF") do (
-        if not "%%~xG"=="" (
-            echo Encontrado:
-            echo %%~fF
-            echo.
-            
-            ren "%%~fF" "%%~nF"
+layout.Controls.Add(
+    new Label { Text = "Nome do modelo", AutoSize = true },
+    0,
+    1);
 
-            if errorlevel 1 (
-                echo [ERRO] Nao foi possivel renomear.
-            ) else (
-                echo [OK] Restaurado para: %%~nF
-                set /a ALTERADOS+=1
-            )
+layout.Controls.Add(_nome, 1, 1);
 
-            echo --------------------------------------------
-        )
-    )
-)
+// Mantemos somente para erros e avisos.
+// Quando tudo der certo, ficará vazio.
+layout.Controls.Add(_status, 0, 2);
+layout.SetColumnSpan(_status, 2);
 
-echo.
-echo ============================================
-echo PROCESSO FINALIZADO
-echo ============================================
-echo Arquivos .txt encontrados: %TOTAL%
-echo Arquivos restaurados: %ALTERADOS%
-echo.
-echo Pressione qualquer tecla para fechar.
-pause >nul
+layout.Controls.Add(_etapaDeteccao, 0, 3);
+layout.SetColumnSpan(_etapaDeteccao, 2);
+
+layout.Controls.Add(
+    new Label { Text = "Matriz básica", AutoSize = true },
+    0,
+    4);
+
+layout.Controls.Add(_etapaMatrizes, 1, 4);
+
+layout.Controls.Add(_matrizResumo, 1, 5);
+
+layout.Controls.Add(
+    new Label { Text = "Anexos pendentes", AutoSize = true },
+    0,
+    6);
+
+layout.Controls.Add(_etapaRevisao, 1, 6);
+
+_etapaMatrizes.ConfiguracaoAlterada += delegate
+{
+    AtualizarResumoMatriz();
+};
+
+var salvar = new Button
+{
+    Text = "Salvar cadastro",
+    AutoSize = true,
+    Height = 38
+};
+
+salvar.Click += delegate
+{
+    Salvar();
+};
+
+var cancelar = new Button
+{
+    Text = "Cancelar",
+    AutoSize = true,
+    Height = 38
+};
+
+cancelar.Click += delegate
+{
+    Close();
+};
+
+var botoes = new FlowLayoutPanel
+{
+    AutoSize = true,
+    FlowDirection = FlowDirection.RightToLeft,
+    Dock = DockStyle.Fill
+};
+
+botoes.Controls.Add(cancelar);
+botoes.Controls.Add(salvar);
+
+layout.Controls.Add(botoes, 0, 7);
+layout.SetColumnSpan(botoes, 2);
+
+Controls.Add(layout);
