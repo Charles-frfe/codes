@@ -1,20 +1,25 @@
-var linhaAdicionar = new FlowLayoutPanel
+_adicionarComponente.Click += delegate
 {
-    AutoSize = true,
-    Dock = DockStyle.Fill,
-    WrapContents = false
-};
+    var nome = _novoComponente.Text.Trim();
 
-linhaAdicionar.Controls.Add(_novoComponente);
-linhaAdicionar.Controls.Add(_adicionarComponente);
+    if (string.IsNullOrWhiteSpace(nome))
+        return;
 
-layout.Controls.Add(
-    new Label
+    foreach (var item in _componentes.Items)
     {
-        Text = "Adicionar componente",
-        AutoSize = true
-    },
-    0,
-    1);
+        if (string.Equals(
+            item.ToString(),
+            nome,
+            System.StringComparison.OrdinalIgnoreCase))
+        {
+            _novoComponente.Clear();
+            return;
+        }
+    }
 
-layout.Controls.Add(linhaAdicionar, 1, 1);
+    var indice = _componentes.Items.Add(nome);
+    _componentes.SetItemChecked(indice, true);
+
+    _novoComponente.Clear();
+    _novoComponente.Focus();
+};
