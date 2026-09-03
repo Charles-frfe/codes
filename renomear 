@@ -1,43 +1,62 @@
-private void AtualizarEditoresComponentes()
+var cadastro = new PilotoCadastro
 {
-    var selecionados =
-        new HashSet<string>(
-            _etapaDeteccao.ComponentesSelecionados,
-            StringComparer.OrdinalIgnoreCase);
+    Codigo = _codigo.Text.Trim(),
+    NomeModelo = _nome.Text.Trim(),
+    PastaOrigem = _origem.Text.Trim()
+};
 
-    foreach (var nome in selecionados)
-    {
-        ComponenteEditorControl editor;
-
-        if (!_editorPorComponente.TryGetValue(
-            nome,
-            out editor))
+foreach (var nomeComponente in
+    _etapaDeteccao.ComponentesSelecionados)
+{
+    var componente =
+        new ComponenteCadastro
         {
-            editor =
-                new ComponenteEditorControl(nome);
+            Nome = nomeComponente
+        };
 
-            _editorPorComponente.Add(
-                nome,
-                editor);
+    ComponenteEditorControl editor;
+
+    if (_editorPorComponente.TryGetValue(
+        nomeComponente,
+        out editor))
+    {
+        foreach (var matriz in editor.Matrizes)
+        {
+            if (string.Equals(
+                matriz.Tipo,
+                "Laterais",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                componente.Matrizes.AddRange(
+                    _servicos.Matrizes.CriarGrupoLaterais(
+                        matriz));
+            }
+            else
+            {
+                componente.Matrizes.Add(matriz);
+            }
         }
     }
 
-    _editoresComponentes.SuspendLayout();
+    cadastro.Componentes.Add(componente);
+}
 
-    _editoresComponentes.Controls.Clear();
-
-    foreach (var nome in
-        _etapaDeteccao.ComponentesSelecionados)
-    {
-        ComponenteEditorControl editor;
-
-        if (_editorPorComponente.TryGetValue(
-            nome,
-            out editor))
+// Temporário:
+// ainda mantemos as texturas no nível geral
+// para não quebrar a estrutura antiga.
+// Na próxima etapa elas serão distribuídas
+// para cada componente.
+foreach (var item in
+    _etapaDeteccao.TexturasSelecionadas)
+{
+    cadastro.Texturas.Add(
+        new TexturaCadastro
         {
-            _editoresComponentes.Controls.Add(editor);
-        }
-    }
-
-    _editoresComponentes.ResumeLayout();
+            Nome = item,
+            CaminhoDetectado =
+                Path.Combine(_origem.Text, item),
+            CaminhoRelativo = item,
+            Selecionada = true,
+            Confirmada = true
+        });
 }
