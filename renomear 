@@ -1,37 +1,164 @@
-foreach (var nomeTextura in
-    _novaMatriz.TexturasSelecionadas)
+using System.Collections.Generic;
+using System.Windows.Forms;
+using ProjetosCADLaser.Models;
+
+namespace ProjetosCADLaser.Controls
 {
-    TexturaCadastro textura = null;
-
-    foreach (var existente in
-        _texturasDoComponente)
+    public sealed class ObservacoesControl : UserControl
     {
-        if (string.Equals(
-            existente.Nome,
-            nomeTextura,
-            StringComparison.OrdinalIgnoreCase))
-        {
-            textura = existente;
-            break;
-        }
-    }
-
-    if (textura == null)
-    {
-        textura =
-            new TexturaCadastro
+        private readonly TextBox _texto =
+            new TextBox
             {
-                Nome = nomeTextura
+                Width = 650,
+                Multiline = true,
+                Height = 60
             };
 
-        _texturasDoComponente.Add(
-            textura);
-    }
+        private readonly Button _adicionar =
+            new Button
+            {
+                Text = "+ Adicionar observação",
+                AutoSize = true
+            };
 
-    if (!matriz.TexturasIds.Contains(
-        textura.Id))
-    {
-        matriz.TexturasIds.Add(
-            textura.Id);
+        private readonly FlowLayoutPanel _lista =
+            new FlowLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false
+            };
+
+        private readonly List<ObservacaoPendente>
+            _observacoes =
+                new List<ObservacaoPendente>();
+
+        public ObservacoesControl()
+        {
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            var layout =
+                new TableLayoutPanel
+                {
+                    AutoSize = true,
+                    AutoSizeMode =
+                        AutoSizeMode.GrowAndShrink,
+                    ColumnCount = 1,
+                    RowCount = 4
+                };
+
+            layout.Controls.Add(
+                new Label
+                {
+                    Text = "Observações",
+                    AutoSize = true
+                },
+                0,
+                0);
+
+            layout.Controls.Add(
+                _texto,
+                0,
+                1);
+
+            layout.Controls.Add(
+                _adicionar,
+                0,
+                2);
+
+            layout.Controls.Add(
+                _lista,
+                0,
+                3);
+
+            Controls.Add(layout);
+
+            _adicionar.Click += delegate
+            {
+                Adicionar();
+            };
+
+            AtualizarLista();
+        }
+
+        public IReadOnlyList<ObservacaoPendente>
+            Observacoes
+        {
+            get
+            {
+                return _observacoes.AsReadOnly();
+            }
+        }
+
+        private void Adicionar()
+        {
+            var texto =
+                _texto.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(texto))
+                return;
+
+            _observacoes.Add(
+                new ObservacaoPendente
+                {
+                    Texto = texto
+                });
+
+            _texto.Clear();
+
+            AtualizarLista();
+        }
+
+        private void AtualizarLista()
+        {
+            _lista.Controls.Clear();
+
+            for (var i = 0;
+                i < _observacoes.Count;
+                i++)
+            {
+                var indice = i;
+
+                var linha =
+                    new FlowLayoutPanel
+                    {
+                        AutoSize = true,
+                        WrapContents = false
+                    };
+
+                linha.Controls.Add(
+                    new Label
+                    {
+                        Text =
+                            _observacoes[indice].Texto,
+                        AutoSize = true,
+                        MaximumSize =
+                            new System.Drawing.Size(
+                                550,
+                                0)
+                    });
+
+                var remover =
+                    new Button
+                    {
+                        Text = "Remover",
+                        AutoSize = true
+                    };
+
+                remover.Click += delegate
+                {
+                    _observacoes.RemoveAt(
+                        indice);
+
+                    AtualizarLista();
+                };
+
+                linha.Controls.Add(remover);
+
+                _lista.Controls.Add(linha);
+            }
+        }
     }
 }
