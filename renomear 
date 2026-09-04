@@ -1,8 +1,3 @@
-public IEnumerable<MatrizCadastro> Matrizes
-{
-    get { return _matrizesAdicionadas; }
-}
-
 public IEnumerable<string> TexturasSelecionadas
 {
     get
@@ -15,11 +10,6 @@ public IEnumerable<string> TexturasSelecionadas
 public void DefinirTexturasDisponiveis(
     IEnumerable<string> texturas)
 {
-    var selecionadas =
-        new HashSet<string>(
-            TexturasSelecionadas,
-            StringComparer.OrdinalIgnoreCase);
-
     _texturas.Items.Clear();
 
     if (texturas == null)
@@ -30,12 +20,6 @@ public void DefinirTexturasDisponiveis(
         if (string.IsNullOrWhiteSpace(textura))
             continue;
 
-        var indice =
-            _texturas.Items.Add(textura);
-
-        if (selecionadas.Contains(textura))
-            _texturas.SetItemChecked(
-                indice,
-                true);
+        _texturas.Items.Add(textura);
     }
 }
