@@ -1,30 +1,20 @@
-private readonly ListBox _anexos =
-    new ListBox
+var botoesAnexos =
+    new FlowLayoutPanel
     {
-        Width = 650,
-        Height = 70
+        AutoSize = true,
+        WrapContents = false
     };
 
-private readonly Button _adicionarArquivo =
-    new Button
-    {
-        Text = "Adicionar arquivo",
-        AutoSize = true
-    };
+botoesAnexos.Controls.Add(_adicionarArquivo);
+botoesAnexos.Controls.Add(_adicionarImagem);
+botoesAnexos.Controls.Add(_removerAnexo);
 
-private readonly Button _adicionarImagem =
-    new Button
-    {
-        Text = "Adicionar imagem",
-        AutoSize = true
-    };
+layout.Controls.Add(
+    botoesAnexos,
+    0,
+    2);
 
-private readonly Button _removerAnexo =
-    new Button
-    {
-        Text = "Remover anexo",
-        AutoSize = true
-    };
-
-private readonly List<AnexoPendente> _anexosEmEdicao =
-    new List<AnexoPendente>();
+layout.Controls.Add(
+    _anexos,
+    0,
+    3);
