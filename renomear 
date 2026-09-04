@@ -1,79 +1,31 @@
-private void AdicionarAnexo(bool imagem)
+var textoExibicao =
+    _observacoes[indice].Texto;
+
+if (_observacoes[indice].Anexos.Count > 0)
 {
-    if (_anexoService == null ||
-        string.IsNullOrWhiteSpace(_sessao))
-        return;
+    var nomes =
+        new List<string>();
 
-    using (var dialogo = new OpenFileDialog())
+    foreach (var anexo in
+        _observacoes[indice].Anexos)
     {
-        dialogo.Multiselect = false;
-
-        dialogo.Title =
-            imagem
-                ? "Selecionar imagem"
-                : "Selecionar arquivo";
-
-        if (imagem)
-        {
-            dialogo.Filter =
-                "Imagens|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|Todos os arquivos|*.*";
-        }
-
-        if (dialogo.ShowDialog(this) !=
-            DialogResult.OK)
-            return;
-
-        try
-        {
-            var anexo =
-                _anexoService.AdicionarArquivo(
-                    _sessao,
-                    dialogo.FileName,
-                    imagem);
-
-            _anexosEmEdicao.Add(anexo);
-
-            _anexos.Items.Add(
-                anexo.NomeOriginal);
-        }
-        catch (IOException ex)
-        {
-            MessageBox.Show(
-                this,
-                ex.Message,
-                "Anexo",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-        }
+        nomes.Add(
+            anexo.NomeOriginal);
     }
+
+    textoExibicao +=
+        System.Environment.NewLine +
+        "Anexos: " +
+        string.Join(", ", nomes);
 }
 
-private void RemoverAnexo()
-{
-    if (_anexos.SelectedIndex < 0 ||
-        _anexos.SelectedIndex >=
-        _anexosEmEdicao.Count)
-        return;
-
-    var indice =
-        _anexos.SelectedIndex;
-
-    var anexo =
-        _anexosEmEdicao[indice];
-
-    try
+linha.Controls.Add(
+    new Label
     {
-        if (File.Exists(
-            anexo.CaminhoTemporario))
-        {
-            File.Delete(
-                anexo.CaminhoTemporario);
-        }
-    }
-    catch (IOException)
-    {
-    }
-
-    _anexosEmEdicao.RemoveAt(indice);
-    _anexos.Items.RemoveAt(indice);
-}
+        Text = textoExibicao,
+        AutoSize = true,
+        MaximumSize =
+            new System.Drawing.Size(
+                550,
+                0)
+    });
