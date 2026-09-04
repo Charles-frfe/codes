@@ -1,62 +1,41 @@
-var cadastro = new PilotoCadastro
+public IEnumerable<MatrizCadastro> Matrizes
 {
-    Codigo = _codigo.Text.Trim(),
-    NomeModelo = _nome.Text.Trim(),
-    PastaOrigem = _origem.Text.Trim()
-};
-
-foreach (var nomeComponente in
-    _etapaDeteccao.ComponentesSelecionados)
-{
-    var componente =
-        new ComponenteCadastro
-        {
-            Nome = nomeComponente
-        };
-
-    ComponenteEditorControl editor;
-
-    if (_editorPorComponente.TryGetValue(
-        nomeComponente,
-        out editor))
-    {
-        foreach (var matriz in editor.Matrizes)
-        {
-            if (string.Equals(
-                matriz.Tipo,
-                "Laterais",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                componente.Matrizes.AddRange(
-                    _servicos.Matrizes.CriarGrupoLaterais(
-                        matriz));
-            }
-            else
-            {
-                componente.Matrizes.Add(matriz);
-            }
-        }
-    }
-
-    cadastro.Componentes.Add(componente);
+    get { return _matrizesAdicionadas; }
 }
 
-// Temporário:
-// ainda mantemos as texturas no nível geral
-// para não quebrar a estrutura antiga.
-// Na próxima etapa elas serão distribuídas
-// para cada componente.
-foreach (var item in
-    _etapaDeteccao.TexturasSelecionadas)
+public IEnumerable<string> TexturasSelecionadas
 {
-    cadastro.Texturas.Add(
-        new TexturaCadastro
-        {
-            Nome = item,
-            CaminhoDetectado =
-                Path.Combine(_origem.Text, item),
-            CaminhoRelativo = item,
-            Selecionada = true,
-            Confirmada = true
-        });
+    get
+    {
+        foreach (var item in _texturas.CheckedItems)
+            yield return item.ToString();
+    }
+}
+
+public void DefinirTexturasDisponiveis(
+    IEnumerable<string> texturas)
+{
+    var selecionadas =
+        new HashSet<string>(
+            TexturasSelecionadas,
+            StringComparer.OrdinalIgnoreCase);
+
+    _texturas.Items.Clear();
+
+    if (texturas == null)
+        return;
+
+    foreach (var textura in texturas)
+    {
+        if (string.IsNullOrWhiteSpace(textura))
+            continue;
+
+        var indice =
+            _texturas.Items.Add(textura);
+
+        if (selecionadas.Contains(textura))
+            _texturas.SetItemChecked(
+                indice,
+                true);
+    }
 }
