@@ -1,20 +1,79 @@
-var botoesAnexos =
-    new FlowLayoutPanel
+private void AdicionarAnexo(bool imagem)
+{
+    if (_anexoService == null ||
+        string.IsNullOrWhiteSpace(_sessao))
+        return;
+
+    using (var dialogo = new OpenFileDialog())
     {
-        AutoSize = true,
-        WrapContents = false
-    };
+        dialogo.Multiselect = false;
 
-botoesAnexos.Controls.Add(_adicionarArquivo);
-botoesAnexos.Controls.Add(_adicionarImagem);
-botoesAnexos.Controls.Add(_removerAnexo);
+        dialogo.Title =
+            imagem
+                ? "Selecionar imagem"
+                : "Selecionar arquivo";
 
-layout.Controls.Add(
-    botoesAnexos,
-    0,
-    2);
+        if (imagem)
+        {
+            dialogo.Filter =
+                "Imagens|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|Todos os arquivos|*.*";
+        }
 
-layout.Controls.Add(
-    _anexos,
-    0,
-    3);
+        if (dialogo.ShowDialog(this) !=
+            DialogResult.OK)
+            return;
+
+        try
+        {
+            var anexo =
+                _anexoService.AdicionarArquivo(
+                    _sessao,
+                    dialogo.FileName,
+                    imagem);
+
+            _anexosEmEdicao.Add(anexo);
+
+            _anexos.Items.Add(
+                anexo.NomeOriginal);
+        }
+        catch (IOException ex)
+        {
+            MessageBox.Show(
+                this,
+                ex.Message,
+                "Anexo",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+        }
+    }
+}
+
+private void RemoverAnexo()
+{
+    if (_anexos.SelectedIndex < 0 ||
+        _anexos.SelectedIndex >=
+        _anexosEmEdicao.Count)
+        return;
+
+    var indice =
+        _anexos.SelectedIndex;
+
+    var anexo =
+        _anexosEmEdicao[indice];
+
+    try
+    {
+        if (File.Exists(
+            anexo.CaminhoTemporario))
+        {
+            File.Delete(
+                anexo.CaminhoTemporario);
+        }
+    }
+    catch (IOException)
+    {
+    }
+
+    _anexosEmEdicao.RemoveAt(indice);
+    _anexos.Items.RemoveAt(indice);
+}
