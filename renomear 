@@ -1,31 +1,52 @@
-var textoExibicao =
-    _observacoes[indice].Texto;
-
-if (_observacoes[indice].Anexos.Count > 0)
+if (observacoesPendentes != null)
 {
-    var nomes =
-        new List<string>();
-
-    foreach (var anexo in
-        _observacoes[indice].Anexos)
+    foreach (var observacao in
+        observacoesPendentes)
     {
-        nomes.Add(
-            anexo.NomeOriginal);
+        if (string.IsNullOrWhiteSpace(
+            observacao.Texto))
+            continue;
+
+        var eventoObservacao =
+            new EventoCadastro
+            {
+                Tipo =
+                    TipoEvento.ObservacaoGeral,
+
+                Observacao =
+                    observacao.Texto,
+
+                ComponenteId =
+                    observacao.ComponenteId,
+
+                MatrizId =
+                    observacao.MatrizId
+            };
+
+        foreach (var pendente in
+            observacao.Anexos)
+        {
+            var anexo =
+                _anexos.CopiarParaCadastro(
+                    pendente,
+                    pastaCadastro,
+                    eventoObservacao.Id);
+
+            cadastro.Anexos.Add(anexo);
+
+            if (pendente.Imagem)
+            {
+                eventoObservacao.Imagens.Add(
+                    anexo);
+            }
+            else
+            {
+                eventoObservacao.Anexos.Add(
+                    anexo);
+            }
+        }
+
+        cadastro.Historico.Add(
+            eventoObservacao);
     }
-
-    textoExibicao +=
-        System.Environment.NewLine +
-        "Anexos: " +
-        string.Join(", ", nomes);
 }
-
-linha.Controls.Add(
-    new Label
-    {
-        Text = textoExibicao,
-        AutoSize = true,
-        MaximumSize =
-            new System.Drawing.Size(
-                550,
-                0)
-    });
