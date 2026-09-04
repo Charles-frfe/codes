@@ -1,25 +1,37 @@
-public IEnumerable<string> TexturasSelecionadas
+foreach (var nomeTextura in
+    _novaMatriz.TexturasSelecionadas)
 {
-    get
+    TexturaCadastro textura = null;
+
+    foreach (var existente in
+        _texturasDoComponente)
     {
-        foreach (var item in _texturas.CheckedItems)
-            yield return item.ToString();
+        if (string.Equals(
+            existente.Nome,
+            nomeTextura,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            textura = existente;
+            break;
+        }
     }
-}
 
-public void DefinirTexturasDisponiveis(
-    IEnumerable<string> texturas)
-{
-    _texturas.Items.Clear();
-
-    if (texturas == null)
-        return;
-
-    foreach (var textura in texturas)
+    if (textura == null)
     {
-        if (string.IsNullOrWhiteSpace(textura))
-            continue;
+        textura =
+            new TexturaCadastro
+            {
+                Nome = nomeTextura
+            };
 
-        _texturas.Items.Add(textura);
+        _texturasDoComponente.Add(
+            textura);
+    }
+
+    if (!matriz.TexturasIds.Contains(
+        textura.Id))
+    {
+        matriz.TexturasIds.Add(
+            textura.Id);
     }
 }
