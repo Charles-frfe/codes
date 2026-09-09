@@ -1,52 +1,39 @@
-if (observacoesPendentes != null)
+// Retaguarda de anexos base caso estejam salvos em piloto.Anexos
+foreach (var anexo in piloto.Anexos)
 {
-    foreach (var observacao in
-        observacoesPendentes)
+    var anexoCaptura = anexo;
+
+    var linkAnexo = new LinkLabel
     {
-        if (string.IsNullOrWhiteSpace(
-            observacao.Texto))
-            continue;
+        Text = $"Arquivo: {anexoCaptura.Titulo ?? anexoCaptura.NomeOriginal}",
+        AutoSize = true,
+        Margin = new Padding(5, 5, 0, 0)
+    };
 
-        var eventoObservacao =
-            new EventoCadastro
-            {
-                Tipo =
-                    TipoEvento.ObservacaoGeral,
+    linkAnexo.LinkClicked += delegate
+    {
+        var caminhoReal = Path.Combine(
+            local.PastaRaizDados,
+            "Cadastros",
+            piloto.Codigo,
+            "anexos",
+            anexoCaptura.CaminhoRelativo ?? string.Empty);
 
-                Observacao =
-                    observacao.Texto,
-
-                ComponenteId =
-                    observacao.ComponenteId,
-
-                MatrizId =
-                    observacao.MatrizId
-            };
-
-        foreach (var pendente in
-            observacao.Anexos)
+        try
         {
-            var anexo =
-                _anexos.CopiarParaCadastro(
-                    pendente,
-                    pastaCadastro,
-                    eventoObservacao.Id);
-
-            cadastro.Anexos.Add(anexo);
-
-            if (pendente.Imagem)
-            {
-                eventoObservacao.Imagens.Add(
-                    anexo);
-            }
-            else
-            {
-                eventoObservacao.Anexos.Add(
-                    anexo);
-            }
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = caminhoReal,
+                    UseShellExecute = true
+                });
         }
+        catch
+        {
+        }
+    };
 
-        cadastro.Historico.Add(
-            eventoObservacao);
-    }
+    pnlAnexos.Controls.Add(linkAnexo);
 }
+
+abaAnexos.Controls.Add(pnlAnexos);
