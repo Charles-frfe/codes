@@ -1,39 +1,23 @@
-// Retaguarda de anexos base caso estejam salvos em piloto.Anexos
-foreach (var anexo in piloto.Anexos)
+public static List<ItemConfiguravel> TiposMatriz()
 {
-    var anexoCaptura = anexo;
-
-    var linkAnexo = new LinkLabel
+    return new[]
     {
-        Text = $"Arquivo: {anexoCaptura.Titulo ?? anexoCaptura.NomeOriginal}",
-        AutoSize = true,
-        Margin = new Padding(5, 5, 0, 0)
-    };
-
-    linkAnexo.LinkClicked += delegate
-    {
-        var caminhoReal = Path.Combine(
-            local.PastaRaizDados,
-            "Cadastros",
-            piloto.Codigo,
-            "anexos",
-            anexoCaptura.CaminhoRelativo ?? string.Empty);
-
-        try
-        {
-            System.Diagnostics.Process.Start(
-                new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = caminhoReal,
-                    UseShellExecute = true
-                });
-        }
-        catch
-        {
-        }
-    };
-
-    pnlAnexos.Controls.Add(linkAnexo);
+        "Lateral",
+        "Lateral fixa direita",
+        "Lateral fixa esquerda",
+        "Lateral móvel direita",
+        "Lateral móvel esquerda",
+        "Postiço",
+        "Tacelo",
+        "Encaixe",
+        "Forma",
+        "Forma direita",
+        "Forma esquerda",
+        "Fundo",
+        "Fundo direito",
+        "Fundo esquerdo",
+        "Gaveta"
+    }
+    .Select(nome => new ItemConfiguravel { Nome = nome })
+    .ToList();
 }
-
-abaAnexos.Controls.Add(pnlAnexos);
