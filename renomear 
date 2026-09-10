@@ -1,90 +1,48 @@
-var abaOrigem = new TabPage("1. Identificação");
-
-var layoutOrigem = new TableLayoutPanel
+private void CarregarPreviewPdf(string pastaPiloto, string codigo)
 {
-    Dock = DockStyle.Fill,
-    Padding = new Padding(30),
-    ColumnCount = 2,
-    RowCount = 1
-};
+    try
+    {
+        if (_previewPdf.Image != null)
+        {
+            var imagemAnterior = _previewPdf.Image;
+            _previewPdf.Image = null;
+            imagemAnterior.Dispose();
+        }
 
-layoutOrigem.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45F));
-layoutOrigem.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55F));
+        if (string.IsNullOrWhiteSpace(pastaPiloto) ||
+            string.IsNullOrWhiteSpace(codigo))
+            return;
 
-var pnlOrigem = new FlowLayoutPanel
-{
-    Dock = DockStyle.Fill,
-    FlowDirection = FlowDirection.TopDown,
-    WrapContents = false
-};
+        var codigoLimpo = new string(codigo.Where(char.IsDigit).ToArray());
 
-pnlOrigem.Controls.Add(new Label
-{
-    Text = "Identificação do Projeto",
-    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-    Margin = new Padding(0, 0, 0, 15),
-    AutoSize = true
-});
+        if (codigoLimpo.Length < 5)
+            return;
 
-pnlOrigem.Controls.Add(new Label
-{
-    Text = "Código do modelo:",
-    AutoSize = true
-});
+        var nomePdf = codigoLimpo.Substring(0, 5) + ".pdf";
 
-var pnlCodigo = new FlowLayoutPanel
-{
-    AutoSize = true,
-    FlowDirection = FlowDirection.LeftToRight,
-    WrapContents = false,
-    Margin = new Padding(0)
-};
+        var caminhoPdf = Path.Combine(pastaPiloto, nomePdf);
 
-pnlCodigo.Controls.Add(_codigo);
+        if (!File.Exists(caminhoPdf))
+            return;
 
-pnlCodigo.Controls.Add(new Label
-{
-    Text = "Pressione TAB para localizar",
-    AutoSize = true,
-    ForeColor = Color.DimGray,
-    Margin = new Padding(10, 5, 0, 0)
-});
+        using (var documento = PdfiumViewer.PdfDocument.Load(caminhoPdf))
+        {
+            var tamanho = documento.PageSizes[0];
 
-pnlOrigem.Controls.Add(pnlCodigo);
+            var imagem = documento.Render(
+                0,
+                (int)(tamanho.Width * 2),
+                (int)(tamanho.Height * 2),
+                150,
+                150,
+                PdfiumViewer.PdfRenderFlags.Annotations);
 
-_codigo.Leave += async delegate
-{
-    await LocalizarPilotoAutomaticamente();
-};
-
-pnlOrigem.Controls.Add(new Label
-{
-    Text = "Nome do modelo:",
-    AutoSize = true,
-    Margin = new Padding(0, 15, 0, 0)
-});
-
-pnlOrigem.Controls.Add(_nome);
-
-var pnlPreviewPdf = new Panel
-{
-    Dock = DockStyle.Fill,
-    Margin = new Padding(20, 0, 0, 0),
-    BorderStyle = BorderStyle.FixedSingle
-};
-
-var lblPreviewPdf = new Label
-{
-    Text = "Pré-visualização do PDF\n\nDigite o código e pressione TAB.",
-    Dock = DockStyle.Fill,
-    TextAlign = ContentAlignment.MiddleCenter,
-    ForeColor = Color.DimGray,
-    Font = new Font("Segoe UI", 11F)
-};
-
-pnlPreviewPdf.Controls.Add(lblPreviewPdf);
-
-layoutOrigem.Controls.Add(pnlOrigem, 0, 0);
-layoutOrigem.Controls.Add(pnlPreviewPdf, 1, 0);
-
-abaOrigem.Controls.Add(layoutOrigem);
+            _previewPdf.Image = imagem;
+        }
+    }
+    catch
+    {
+        // O PDF é apenas uma pré-visualização.
+        // Qualquer falha não deve impedir o cadastro da piloto.
+    }
+}
