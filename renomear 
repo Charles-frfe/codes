@@ -1,15 +1,90 @@
-private static bool ContemComponente(string nomePastaNormalizado, string componenteNormalizado)
+var abaOrigem = new TabPage("1. Identificação");
+
+var layoutOrigem = new TableLayoutPanel
 {
-    if (string.IsNullOrWhiteSpace(nomePastaNormalizado) ||
-        string.IsNullOrWhiteSpace(componenteNormalizado))
-        return false;
+    Dock = DockStyle.Fill,
+    Padding = new Padding(30),
+    ColumnCount = 2,
+    RowCount = 1
+};
 
-    var padrao = @"(^|\s)" +
-                 Regex.Escape(componenteNormalizado) +
-                 @"($|\s)";
+layoutOrigem.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45F));
+layoutOrigem.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55F));
 
-    return Regex.IsMatch(
-        nomePastaNormalizado,
-        padrao,
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-}
+var pnlOrigem = new FlowLayoutPanel
+{
+    Dock = DockStyle.Fill,
+    FlowDirection = FlowDirection.TopDown,
+    WrapContents = false
+};
+
+pnlOrigem.Controls.Add(new Label
+{
+    Text = "Identificação do Projeto",
+    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+    Margin = new Padding(0, 0, 0, 15),
+    AutoSize = true
+});
+
+pnlOrigem.Controls.Add(new Label
+{
+    Text = "Código do modelo:",
+    AutoSize = true
+});
+
+var pnlCodigo = new FlowLayoutPanel
+{
+    AutoSize = true,
+    FlowDirection = FlowDirection.LeftToRight,
+    WrapContents = false,
+    Margin = new Padding(0)
+};
+
+pnlCodigo.Controls.Add(_codigo);
+
+pnlCodigo.Controls.Add(new Label
+{
+    Text = "Pressione TAB para localizar",
+    AutoSize = true,
+    ForeColor = Color.DimGray,
+    Margin = new Padding(10, 5, 0, 0)
+});
+
+pnlOrigem.Controls.Add(pnlCodigo);
+
+_codigo.Leave += async delegate
+{
+    await LocalizarPilotoAutomaticamente();
+};
+
+pnlOrigem.Controls.Add(new Label
+{
+    Text = "Nome do modelo:",
+    AutoSize = true,
+    Margin = new Padding(0, 15, 0, 0)
+});
+
+pnlOrigem.Controls.Add(_nome);
+
+var pnlPreviewPdf = new Panel
+{
+    Dock = DockStyle.Fill,
+    Margin = new Padding(20, 0, 0, 0),
+    BorderStyle = BorderStyle.FixedSingle
+};
+
+var lblPreviewPdf = new Label
+{
+    Text = "Pré-visualização do PDF\n\nDigite o código e pressione TAB.",
+    Dock = DockStyle.Fill,
+    TextAlign = ContentAlignment.MiddleCenter,
+    ForeColor = Color.DimGray,
+    Font = new Font("Segoe UI", 11F)
+};
+
+pnlPreviewPdf.Controls.Add(lblPreviewPdf);
+
+layoutOrigem.Controls.Add(pnlOrigem, 0, 0);
+layoutOrigem.Controls.Add(pnlPreviewPdf, 1, 0);
+
+abaOrigem.Controls.Add(layoutOrigem);
