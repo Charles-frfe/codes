@@ -1,48 +1,11 @@
-private void CarregarPreviewPdf(string pastaPiloto, string codigo)
-{
-    try
-    {
-        if (_previewPdf.Image != null)
-        {
-            var imagemAnterior = _previewPdf.Image;
-            _previewPdf.Image = null;
-            imagemAnterior.Dispose();
-        }
+resultado.Sort(
+    Function(a As ProjetoEncontrado, b As ProjetoEncontrado)
+        Dim compCodigo As Integer = ObterPrioridadeNome(a.NomePasta, codigo).CompareTo(ObterPrioridadeNome(b.NomePasta, codigo))
 
-        if (string.IsNullOrWhiteSpace(pastaPiloto) ||
-            string.IsNullOrWhiteSpace(codigo))
-            return;
+        If compCodigo <> 0 Then
+            Return compCodigo
+        End If
 
-        var codigoLimpo = new string(codigo.Where(char.IsDigit).ToArray());
-
-        if (codigoLimpo.Length < 5)
-            return;
-
-        var nomePdf = codigoLimpo.Substring(0, 5) + ".pdf";
-
-        var caminhoPdf = Path.Combine(pastaPiloto, nomePdf);
-
-        if (!File.Exists(caminhoPdf))
-            return;
-
-        using (var documento = PdfiumViewer.PdfDocument.Load(caminhoPdf))
-        {
-            var tamanho = documento.PageSizes[0];
-
-            var imagem = documento.Render(
-                0,
-                (int)(tamanho.Width * 2),
-                (int)(tamanho.Height * 2),
-                150,
-                150,
-                PdfiumViewer.PdfRenderFlags.Annotations);
-
-            _previewPdf.Image = imagem;
-        }
-    }
-    catch
-    {
-        // O PDF é apenas uma pré-visualização.
-        // Qualquer falha não deve impedir o cadastro da piloto.
-    }
-}
+        Return b.DataAlteracao.CompareTo(a.DataAlteracao)
+    End Function
+)
