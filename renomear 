@@ -1,11 +1,17 @@
-resultado.Sort(
-    Function(a As ProjetoEncontrado, b As ProjetoEncontrado)
-        Dim compCodigo As Integer = ObterPrioridadeNome(a.NomePasta, codigo).CompareTo(ObterPrioridadeNome(b.NomePasta, codigo))
+Private Function ObterPrioridadeNome(nomePasta As String, codigo As String) As Integer
+    If String.IsNullOrWhiteSpace(nomePasta) OrElse String.IsNullOrWhiteSpace(codigo) Then
+        Return 9
+    End If
 
-        If compCodigo <> 0 Then
-            Return compCodigo
-        End If
+    Dim nome As String = nomePasta.Trim()
 
-        Return b.DataAlteracao.CompareTo(a.DataAlteracao)
-    End Function
-)
+    If Regex.IsMatch(nome, "^" & Regex.Escape(codigo) & "(?:$|[ _-])", RegexOptions.IgnoreCase) Then
+        Return 0
+    End If
+
+    If Regex.IsMatch(nome, "^" & Regex.Escape(codigo) & "[A-Za-z](?:$|[ _-])", RegexOptions.IgnoreCase) Then
+        Return 1
+    End If
+
+    Return 9
+End Function
