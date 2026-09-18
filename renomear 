@@ -1,17 +1,132 @@
-Private Function ObterPrioridadeNome(nomePasta As String, codigo As String) As Integer
-    If String.IsNullOrWhiteSpace(nomePasta) OrElse String.IsNullOrWhiteSpace(codigo) Then
-        Return 9
-    End If
+import tkinter as tk
 
-    Dim nome As String = nomePasta.Trim()
+# =========================
+# CONFIGURAÇÕES
+# =========================
 
-    If Regex.IsMatch(nome, "^" & Regex.Escape(codigo) & "(?:$|[ _-])", RegexOptions.IgnoreCase) Then
-        Return 0
-    End If
+INTERVALO_MINUTOS = 60
+DURACAO_AVISO_SEGUNDOS = 12
+QUANTIDADE_ML = 200
 
-    If Regex.IsMatch(nome, "^" & Regex.Escape(codigo) & "[A-Za-z](?:$|[ _-])", RegexOptions.IgnoreCase) Then
-        Return 1
-    End If
 
-    Return 9
-End Function
+class LembreteAgua:
+
+    def __init__(self, root):
+        self.root = root
+
+        # Esconde a janela principal
+        self.root.withdraw()
+
+        self.popup = None
+        self.timer_fechar = None
+
+        # Começa a contagem
+        self.agendar_aviso()
+
+    def agendar_aviso(self):
+        """Agenda o próximo lembrete."""
+
+        tempo = INTERVALO_MINUTOS * 60 * 1000
+
+        self.root.after(
+            tempo,
+            self.mostrar_aviso
+        )
+
+    def mostrar_aviso(self):
+        """Mostra o aviso na tela."""
+
+        self.popup = tk.Toplevel(self.root)
+
+        # Remove barra normal da janela
+        self.popup.overrideredirect(True)
+
+        # Mantém acima das outras janelas
+        self.popup.attributes("-topmost", True)
+
+        largura = 340
+        altura = 140
+
+        largura_tela = self.popup.winfo_screenwidth()
+
+        # Canto superior direito
+        x = largura_tela - largura - 30
+        y = 50
+
+        self.popup.geometry(
+            f"{largura}x{altura}+{x}+{y}"
+        )
+
+        self.popup.configure(bg="#1976D2")
+
+        titulo = tk.Label(
+            self.popup,
+            text="💧 Hora de beber água!",
+            font=("Segoe UI", 16, "bold"),
+            bg="#1976D2",
+            fg="white"
+        )
+
+        titulo.pack(pady=(25, 5))
+
+        mensagem = tk.Label(
+            self.popup,
+            text=f"Beba aproximadamente {QUANTIDADE_ML} ml de água",
+            font=("Segoe UI", 11),
+            bg="#1976D2",
+            fg="white"
+        )
+
+        mensagem.pack()
+
+        dica = tk.Label(
+            self.popup,
+            text="Clique para fechar",
+            font=("Segoe UI", 9),
+            bg="#1976D2",
+            fg="white"
+        )
+
+        dica.pack(pady=8)
+
+        # Clicar em qualquer parte fecha o aviso
+        self.popup.bind("<Button-1>", self.fechar_aviso)
+
+        titulo.bind("<Button-1>", self.fechar_aviso)
+        mensagem.bind("<Button-1>", self.fechar_aviso)
+        dica.bind("<Button-1>", self.fechar_aviso)
+
+        # Fecha sozinho depois de alguns segundos
+        self.timer_fechar = self.popup.after(
+            DURACAO_AVISO_SEGUNDOS * 1000,
+            self.fechar_aviso
+        )
+
+    def fechar_aviso(self, event=None):
+        """Fecha o aviso e inicia uma nova contagem."""
+
+        if self.popup is not None:
+
+            try:
+                if self.timer_fechar is not None:
+                    self.popup.after_cancel(self.timer_fechar)
+            except:
+                pass
+
+            self.popup.destroy()
+            self.popup = None
+            self.timer_fechar = None
+
+        # Começa a contar novamente
+        self.agendar_aviso()
+
+
+# =========================
+# INÍCIO DO PROGRAMA
+# =========================
+
+root = tk.Tk()
+
+app = LembreteAgua(root)
+
+root.mainloop()
